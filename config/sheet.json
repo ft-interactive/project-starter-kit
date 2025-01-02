@@ -1,0 +1,12 @@
+{
+  "A46": "Did you stick to your fiscal rules?",
+  "A47": "In 2029-30 there is a current surplus of...",
+  "A48": "Part 1 ",
+  "A49": "Part 2 ",
+  "A50": "The fall in debt from 2028-29 to 2029-30 is",
+  "B46": "=if(B47>0,if(B50>0,\"Yes!\",\"No!\"),\"No!\")",
+  "B47": "=-(Fiscal!AF32/100)*('OBR data'!$AC$85*(1+Fiscal!$M$32))",
+  "B48": "=-(Fiscal!AF32/100)",
+  "B49": "=('OBR data'!$AC$85*(1+Fiscal!$M$32))",
+  "B50": "=-(Fiscal!AK32-Fiscal!AK31)"
+}
