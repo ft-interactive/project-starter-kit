@@ -40,7 +40,7 @@
   "private": true,
   "scripts": {
     "data": "node util/getData.js",
-    "gsheet": "node util/getGoogleSheet.js",
+    "gsheet": "node util/getGoogleSheetBatch.js",
     "build": "vite build --mode=development",
     "build:preview": "vite build --mode preview",
     "build:prod": "vite build --mode production",
