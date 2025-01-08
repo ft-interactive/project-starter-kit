@@ -10,6 +10,16 @@ import fs from 'fs';
 // Saving output file in the config as sheet.json unless otherwise specified
 
 // Convert column numbers back to letters
+const columnToNumber = (column) => {
+  let number = 0;
+  // eslint-disable-next-line no-plusplus
+  for (let i = 0; i < column.length; i++) {
+    number = number * 26 + (column.charCodeAt(i) - 64);
+  }
+  return number;
+};
+
+// Convert column numbers back to letters
 const numberToColumn = (number) => {
   let column = '';
   while (number > 0) {
@@ -40,7 +50,7 @@ async function getGoogleSheet(valueRenderOption = 'FORMULA', jsonFileName = 'she
   const spreadsheetId = process.env.G_SHEET_ID;
   const ranges = process.env.G_SHEET_RANGE.split(',');
 
-  // Structure for the batchGet request
+  // batchGet request
   const request = {
     spreadsheetId,
     ranges,
@@ -50,31 +60,56 @@ async function getGoogleSheet(valueRenderOption = 'FORMULA', jsonFileName = 'she
   const response = await sheetsApi.spreadsheets.values.batchGet(request);
 
   // Extracting the rows from the response
-  const rows = response.data.valueRanges || []; // Will be an array of value ranges
+  const rows = response.data.valueRanges || [];
 
-  // Create a json to store the values
+  // Json to store the values
   const formulaDict = {};
 
-  // Loop through the valueRanges returned from batchGet
+  // Loop through the row responses from the batchGet
   rows.forEach((valueRange) => {
     // eslint-disable-next-line prefer-destructuring
     const range = valueRange.range; // Example: 'Sheet1!A1:B10'
     const values = valueRange.values; // The actual data for the range
 
-    // For example, let's populate the formulaDict with the data from this range
+    const sheetName = range.match(/^([A-Za-z0-9_]+)!/)[0];
+
     if (values) {
-      values.forEach((row, rowIndex) => {
-        row.forEach((cellValue, colIndex) => {
-          // Generate a key that includes the range to avoid duplication
-          const columnLetter = numberToColumn(colIndex + 1); // Assuming you want to use column numbers converted to letters
-          const rowNumber = rowIndex + 1; // Row number within the range
+      // Extracting the range details
+      const rowMatch = range.match(/(?<=!)(.*)/);
+      const cellRange = rowMatch ? rowMatch[0] : ''; // Extracting the cell range, e.g., A1:B10
+      const startingCellRange = cellRange.split(':')[0]; // Starting cell, e.g., A1
+      const endingCellRange = cellRange.split(':')[1]; // Ending cell, e.g., B10
 
-          // Use the full range as part of the key
-          const key = `${range}:${columnLetter}${rowNumber}`;
+      // Extract the column and row details
+      const startingColumnLetter = startingCellRange.match(/[A-Za-z]+/)[0]; // Extract column letter, e.g., A
+      const endingColumnLetter = endingCellRange.match(/[A-Za-z]+/)[0]; // Extract ending column letter, e.g., B
+      const startingRow = parseInt(startingCellRange.match(/\d+/)[0], 10); // Extract starting row number, e.g., 1
+      const endingRow = parseInt(endingCellRange.match(/\d+/)[0], 10); // Extract ending row number, e.g., 10
 
-          formulaDict[key] = cellValue;
-        });
-      });
+      // Convert starting and ending columns to numbers
+      const startingColumnNumber = columnToNumber(startingColumnLetter);
+      const endingColumnNumber = columnToNumber(endingColumnLetter);
+
+      // Loop through the columns and rows to populate the formulaDict
+      // eslint-disable-next-line no-plusplus
+      for (let colNum = startingColumnNumber; colNum <= endingColumnNumber; colNum++) {
+        const columnLetter = numberToColumn(colNum); // Convert column number back to letter
+
+        // Loop through the rows for each column
+        // eslint-disable-next-line no-plusplus
+        for (let rowIndex = 0; rowIndex < values.length; rowIndex++) {
+          const rowNumber = startingRow + rowIndex; // Calculate row number dynamically based on starting row
+
+          // Ensure the row number is within the range
+          if (rowNumber <= endingRow) {
+            const cellValue = values[rowIndex][colNum - startingColumnNumber];
+            const key = `${sheetName}:${columnLetter}${rowNumber}`; // Key is the sheet name with the cell being refrences
+
+            // Add the value to the formulaDict using the generated key
+            formulaDict[key] = cellValue;
+          }
+        }
+      }
     }
   });
 
