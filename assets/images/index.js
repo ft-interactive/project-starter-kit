@@ -6,7 +6,7 @@ const DEFAULT_IMAGE_PROPS = {
   // alt: ''
 };
 
-const images = sortFiles(import.meta.glob('./*.{png,jpg,jpeg,gif}', { eager: true })).reduce(
+const images = sortFiles(import.meta.glob('./**/*.{png,jpg,jpeg,gif,svg}', { eager: true })).reduce(
   (acc, [k, v]) => {
     const [, name, count, size] =
       k.match(/\/([-_\w]+)\.([0-9]+)?\.?([SMLX]+)?\.?(png|jpe?g|gif)$/) || [];
